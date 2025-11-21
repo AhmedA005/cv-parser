@@ -1,13 +1,7 @@
 import streamlit as st
 import requests
+from typing import Optional
 import json
-import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-API_URL = os.getenv("API_URL", "http://localhost:8000/extract")
-API_KEY = os.getenv("API_KEY")
 
 # Page config
 st.set_page_config(
@@ -20,7 +14,9 @@ st.set_page_config(
 # Custom CSS for modern design
 st.markdown("""
     <style>
-    .main { padding: 2rem; }
+    .main {
+        padding: 2rem;
+    }
     .stButton>button {
         width: 100%;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -84,6 +80,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Constants
+API_URL = "https://unexpendable-intercounty-tuan.ngrok-free.dev/extract"
+API_KEY = "secret123"
+
 # Session state initialization
 if 'result' not in st.session_state:
     st.session_state.result = None
@@ -95,14 +95,11 @@ st.markdown("# 📄 CV Parser")
 st.markdown("<p class='subtitle'>Upload your resume and extract structured data instantly</p>", unsafe_allow_html=True)
 
 # File upload section
-st.markdown("<div class='upload-box'>", unsafe_allow_html=True)
 pdf = st.file_uploader(
-    "Drop your PDF here or click to browse",
+    "📎 Drop your PDF here or click to browse",
     type=["pdf"],
-    help="Upload a PDF resume to extract information",
-    label_visibility="collapsed"
+    help="Upload a PDF resume to extract information"
 )
-st.markdown("</div>", unsafe_allow_html=True)
 
 if pdf:
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -114,23 +111,23 @@ if pdf:
     if st.button("🚀 Extract Data", type="primary"):
         with st.spinner("🔄 Processing your CV..."):
             try:
-                # API request using environment variables
+                # API request
                 response = requests.post(
                     API_URL,
                     headers={"Authorization": f"Bearer {API_KEY}"},
-                    files={"file": (pdf.name, pdf.getvalue(), pdf.type)}
+                    files={"file": (pdf.name, pdf.getvalue(), pdf.type)},
+                    timeout=120  # Increased timeout for LLM processing
                 )
-
+                
                 # Handle response
                 if response.status_code == 200:
                     st.session_state.result = response.json()
                     st.session_state.error = None
-                    st.markdown("<div class='success-box'>✅ Successfully extracted CV data!</div>",
-                                unsafe_allow_html=True)
+                    st.markdown("<div class='success-box'>✅ Successfully extracted CV data!</div>", unsafe_allow_html=True)
                 else:
                     st.session_state.error = f"API Error: {response.status_code}"
                     st.session_state.result = None
-
+                    
             except requests.exceptions.Timeout:
                 st.session_state.error = "Request timed out. Please try again."
                 st.session_state.result = None
@@ -149,7 +146,7 @@ if st.session_state.result:
     st.markdown("---")
     st.markdown("### 📊 Extracted Data")
     st.json(st.session_state.result, expanded=True)
-
+    
     # Download button
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -162,5 +159,4 @@ if st.session_state.result:
 
 # Footer
 st.markdown("---")
-st.markdown("<p style='text-align: center; color: #999; font-size: 0.9rem;'>Powered by AI • Secure & Fast</p>",
-            unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #999; font-size: 0.9rem;'>Powered by AI • Secure & Fast</p>", unsafe_allow_html=True)
