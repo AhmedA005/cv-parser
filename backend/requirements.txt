@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pyngrok
+transformers==4.52.4
+torch
+langchain
+python-dotenv
